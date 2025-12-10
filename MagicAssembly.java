@@ -23,24 +23,26 @@ public class MagicAssembly extends CustomAssembly {
     @Override
     protected void populate() {
         instructionList.add(
-                new BasicInstruction("fuse $t0,$t1,$t2",
-                        "Fuse: rd = rs + rt",
+                new BasicInstruction("fuse $t0,$t1",
+                        "Fuse: $t0 = $t0 + $t1",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000001",
+                        "000000 fffff sssss 00000 00000 000001",
                         new SimulationCode() {
-                            public void simulate(ProgramStatement statement) throws ProcessingException {
-                                int[] operands = statement.getOperands();
-                                int rd = operands[0], rs = operands[1], rt = operands[2];
-                                int result = RegisterFile.getValue(rs) + RegisterFile.getValue(rt);
-                                RegisterFile.updateRegister(rd, result);
+                            public void simulate(ProgramStatement statement) {
+                                int[] op = statement.getOperands();
+                                RegisterFile.updateRegister(
+                                        op[0],
+                                        RegisterFile.getValue(op[0]) + RegisterFile.getValue(op[1])
+                                );
                             }
-                        }));
+                        }
+                ));
 
         instructionList.add(
                 new BasicInstruction("dspl $t0,$t1,$t2",
                         "Dispel: rd = rs - rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000010",
+                        "000000 fffff sssss ttttt 00000 000010",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -54,7 +56,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("alchm $t0,$t1,$t2",
                         "Alchemize: rd = rs * rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000011",
+                        "000000 fffff sssss ttttt 00000 000011",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -68,7 +70,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("dspt $t0,$t1,$t2",
                         "Dissipate: rd = rs / rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000100",
+                        "000000 fffff sssss 00000 00000 000100",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -86,7 +88,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("bind $t0,$t1,$t2",
                         "Bind: rd = rs & rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000101",
+                        "000000 fffff sssss ttttt 00000 000101",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -99,7 +101,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("svr $t0,$t1,$t2",
                         "Sever: rd = rs | rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000110",
+                        "000000 fffff sssss ttttt 00000 000110",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -112,7 +114,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("veil $t0,$t1,$t2",
                         "Veil: rd = rs ^ rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss ttttt 00000 000111",
+                        "000000 fffff sssss ttttt 00000 000111",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -125,7 +127,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("cnjr $t0,4($t1)",
                         "Conjure: R[rt] = Memory[R[rs] + imm]",
                         BasicInstructionFormat.I_FORMAT,
-                        "100000 rrrrr sssss immediate",
+                        "100000 ttttt sssss immediate",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -145,7 +147,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("implant $t0,4($t1)",
                         "Implant: Memory[R[rs] + imm] = R[rt]",
                         BasicInstructionFormat.I_FORMAT,
-                        "100001 rrrrr sssss immediate",
+                        "100001 ttttt sssss immediate",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -161,38 +163,39 @@ public class MagicAssembly extends CustomAssembly {
                         }));
 
         instructionList.add(
-                new BasicInstruction("chnl $t0,$t1,100",
+                new BasicInstruction("chnl $t0, -100",
                         "Channel: R[rd] = R[rs] + immediate",
                         BasicInstructionFormat.I_FORMAT,
-                        "011000 rrrrr sssss immediate",
+                        "011000 fffff ssssssssssssssss",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
-                                int rd = operands[0], rs = operands[1];
-                                int imm = operands[2] << 16 >> 16;
-                                RegisterFile.updateRegister(rd, RegisterFile.getValue(rs) + imm);
+                                int add1 = RegisterFile.getValue(operands[0]);
+                                int add2 = operands[1] << 16 >> 16;
+                                int sum = add1 + add2;
+                                RegisterFile.updateRegister(operands[0], sum);
                             }
                         }));
 
         instructionList.add(
-                new BasicInstruction("amp $t0,$t1,100",
-                        "Amplify: R[rd] = R[rs] * immediate",
+                new BasicInstruction("amp $t0,100",
+                        "Amplify: $t0 = $t0 * immediate",
                         BasicInstructionFormat.I_FORMAT,
-                        "101000 rrrrr sssss immediate",
+                        "101000 fffff 00000 ssssssssssssssss",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
-                                int[] operands = statement.getOperands();
-                                int rd = operands[0], rs = operands[1];
-                                int imm = operands[2] << 16 >> 16;
-                                RegisterFile.updateRegister(rd, RegisterFile.getValue(rs) * imm);
+                                int rs = statement.getOperands()[0];
+                                int imm = statement.getOperands()[1] << 16 >> 16;
+                                RegisterFile.updateRegister(rs,
+                                        RegisterFile.getValue(rs) * imm);
                             }
                         }));
 
         instructionList.add(
                 new BasicInstruction("cncl $t0",
-                        "Cancel: rd = 0",
+                        "Cancel: $t0 = 0",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd 00000 00000 00000 010010",
+                        "010010 fffff 00000 0000000000000000",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int rd = statement.getOperands()[0];
@@ -204,7 +207,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("ward $t0,$t1,label",
                         "Ward: branch if R[rs] == R[rt] to label",
                         BasicInstructionFormat.I_BRANCH_FORMAT,
-                        "000100 sssss ttttt branchoffset",
+                        "000100 fffff ttttt branchoffset",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -219,7 +222,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("curse $t0,$t1,label",
                         "Curse: branch if R[rs] != R[rt] to label",
                         BasicInstructionFormat.I_BRANCH_FORMAT,
-                        "000101 sssss ttttt branchoffset",
+                        "000101 fffff ttttt branchoffset",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -231,20 +234,15 @@ public class MagicAssembly extends CustomAssembly {
                         }));
 
         instructionList.add(
-                new BasicInstruction("tp label",
-                        "Teleport: unconditional jump to label",
-                        BasicInstructionFormat.J_FORMAT,
-                        "000010 address26",
+                new BasicInstruction("tp $t0, label",
+                        "Teleport (Jump): Unconditionally jump to label (uses dummy register).",
+                        BasicInstructionFormat.I_FORMAT,
+                        "000010 fffff 00000 ssssssssssssssss",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
-                                String label = statement.getOriginalTokenList().size() > 1
-                                        ? statement.getOriginalTokenList().get(1).getValue()
-                                        : null;
-                                if (label == null) {
-                                    throw new ProcessingException(statement, "Missing label for tp");
-                                }
-                                int byteAddress = Globals.program.getLocalSymbolTable().getAddressLocalOrGlobal(label);
-                                Globals.instructionSet.processBranch(byteAddress);
+                                int jumpOffset = statement.getOperands()[1];
+                                int branchAddress = RegisterFile.getProgramCounter() + jumpOffset;
+                                RegisterFile.setProgramCounter(branchAddress);
                             }
                         }));
 
@@ -252,7 +250,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("trns $t0,$t1",
                         "Transmute: R[rd] = R[rs] (copy)",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss 00000 00000 010000",
+                        "000000 fffff sssss 00000 00000 010000",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -265,7 +263,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("swap $t0,$t1",
                         "Swap: exchange contents of rs and rt",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 00000 sssss ttttt 00000 010001",
+                        "000000 fffff sssss 00000 00000 010001",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -277,16 +275,15 @@ public class MagicAssembly extends CustomAssembly {
                         }));
 
         instructionList.add(
-                new BasicInstruction("clone $t0,$t1",
-                        "Clone: R[rd] = R[rs] + R[rs]",
+                new BasicInstruction("clone $t0",
+                        "Clone: $t0 = $t0 + $t0",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss 00000 00000 010011",
+                        "000000 fffff 00000 00000 00000 010011",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
-                                int[] operands = statement.getOperands();
-                                int rd = operands[0], rs = operands[1];
+                                int rs = statement.getOperands()[0];
                                 int val = RegisterFile.getValue(rs);
-                                RegisterFile.updateRegister(rd, val + val);
+                                RegisterFile.updateRegister(rs, val + val);
                             }
                         }));
 
@@ -294,7 +291,7 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("brir $t0,$t1",
                         "Barrier: R[rd] = max(R[rs],0) (clamp negative to zero)",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 ddddd sssss 00000 00000 010100",
+                        "000000 fffff sssss 00000 00000 010100",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
@@ -309,13 +306,25 @@ public class MagicAssembly extends CustomAssembly {
                 new BasicInstruction("chrg $t0",
                         "Charge: increment R[rs] by 1",
                         BasicInstructionFormat.R_FORMAT,
-                        "000000 00000 sssss 00000 00000 010101",
+                        "000000 fffff 00000 00000 00000 010101",
                         new SimulationCode() {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
                                 int rs = operands[0];
                                 int val = RegisterFile.getValue(rs) + 1;
                                 RegisterFile.updateRegister(rs, val);
+                            }
+                        }));
+
+        instructionList.add(
+                new BasicInstruction("Halt",
+                        "Halt: Force the program to terminate by setting the PC to zero.",
+                        BasicInstructionFormat.R_FORMAT,
+                        "000000 00000 00000 00000 00000 111111",
+                        new SimulationCode() {
+                            public void simulate(ProgramStatement statement) throws ProcessingException {
+                                RegisterFile.setProgramCounter(0);
+
                             }
                         }));
     }
